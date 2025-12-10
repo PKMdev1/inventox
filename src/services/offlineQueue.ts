@@ -211,14 +211,29 @@ const processAction = async (action: QueuedAction): Promise<boolean> => {
       let toShelfId: string | null = null;
 
       if (payload.destination_shelf_barcode) {
-        // Moving to another shelf
-        const { data: destShelf } = await supabase
+        // Moving to another shelf - normalize barcode
+        const normalizedBarcode = payload.destination_shelf_barcode.trim().toUpperCase();
+        
+        const { data: destShelf, error: destError } = await supabase
           .from('shelves')
           .select('id')
-          .eq('barcode', payload.destination_shelf_barcode)
+          .eq('barcode', normalizedBarcode)
           .single();
 
-        if (destShelf) {
+        if (destError || !destShelf) {
+          // Try case-insensitive search as fallback
+          const { data: destShelfCaseInsensitive } = await supabase
+            .from('shelves')
+            .select('id')
+            .ilike('barcode', normalizedBarcode)
+            .single();
+          
+          if (destShelfCaseInsensitive) {
+            toShelfId = destShelfCaseInsensitive.id;
+          } else {
+            console.error('Destination shelf not found:', payload.destination_shelf_barcode);
+          }
+        } else {
           toShelfId = destShelf.id;
         }
       }
@@ -239,35 +254,70 @@ const processAction = async (action: QueuedAction): Promise<boolean> => {
         timestamp: action.timestamp,
       });
     } else if (type === 'MOVE' && payload.destination_shelf_barcode) {
-      // Direct move action
-      const { data: fromShelf } = await supabase
+      // Direct move action - normalize barcodes
+      const normalizedFromBarcode = payload.shelf_barcode?.trim().toUpperCase() || '';
+      
+      let fromShelf = null;
+      const { data: fromShelfExact } = await supabase
         .from('shelves')
         .select('id')
-        .eq('barcode', payload.shelf_barcode)
+        .eq('barcode', normalizedFromBarcode)
         .single();
+      
+      if (fromShelfExact) {
+        fromShelf = { data: fromShelfExact };
+      } else {
+        // Try case-insensitive
+        const { data: fromShelfCase } = await supabase
+          .from('shelves')
+          .select('id')
+          .ilike('barcode', normalizedFromBarcode)
+          .single();
+        
+        if (fromShelfCase) {
+          fromShelf = { data: fromShelfCase };
+        }
+      }
 
-      const { data: toShelf } = await supabase
+      // Normalize barcode for comparison
+      const normalizedBarcode = payload.destination_shelf_barcode.trim().toUpperCase();
+      
+      const { data: toShelf, error: toShelfError } = await supabase
         .from('shelves')
         .select('id')
-        .eq('barcode', payload.destination_shelf_barcode)
+        .eq('barcode', normalizedBarcode)
         .single();
 
-      if (!toShelf) {
-        console.error('Destination shelf not found');
-        return false;
+      let finalToShelfId: string | null = null;
+      
+      if (toShelfError || !toShelf) {
+        // Try case-insensitive search as fallback
+        const { data: toShelfCaseInsensitive } = await supabase
+          .from('shelves')
+          .select('id')
+          .ilike('barcode', normalizedBarcode)
+          .single();
+        
+        if (!toShelfCaseInsensitive) {
+          console.error('Destination shelf not found:', payload.destination_shelf_barcode);
+          return false;
+        }
+        finalToShelfId = toShelfCaseInsensitive.id;
+      } else {
+        finalToShelfId = toShelf.id;
       }
 
       // Update item's current shelf
       await supabase
         .from('items')
-        .update({ current_shelf_id: toShelf.id })
+        .update({ current_shelf_id: finalToShelfId })
         .eq('id', itemId);
 
       // Create movement record
       await supabase.from('movements').insert({
         item_id: itemId,
-        from_shelf_id: fromShelf?.id || null,
-        to_shelf_id: toShelf.id,
+        from_shelf_id: fromShelf?.data?.id || null,
+        to_shelf_id: finalToShelfId,
         movement_type: 'MOVE',
         user_id: user.id,
         timestamp: action.timestamp,

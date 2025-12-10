@@ -20,11 +20,14 @@ export const ScanShelf = () => {
 
   const fetchShelfData = async (barcode: string) => {
     try {
+      // Normalize barcode for consistent matching
+      const normalizedBarcode = barcode.trim().toUpperCase();
+      
       // Find shelf by barcode
       const { data: shelfData, error: shelfError } = await supabase
         .from('shelves')
         .select('*')
-        .eq('barcode', barcode)
+        .eq('barcode', normalizedBarcode)
         .single();
 
       if (shelfError || !shelfData) {

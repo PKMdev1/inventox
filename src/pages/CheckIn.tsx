@@ -26,10 +26,13 @@ export const CheckIn = () => {
   }, [shelfBarcode]);
 
   const fetchShelf = async () => {
+    // Normalize barcode for consistent matching
+    const normalizedBarcode = shelfBarcode.trim().toUpperCase();
+    
     const { data, error } = await supabase
       .from('shelves')
       .select('*')
-      .eq('barcode', shelfBarcode)
+      .eq('barcode', normalizedBarcode)
       .single();
 
     if (error || !data) {
@@ -110,11 +113,14 @@ export const CheckIn = () => {
       itemId = newItem.id;
     }
 
+    // Normalize barcode for consistent matching
+    const normalizedBarcode = shelfBarcode.trim().toUpperCase();
+    
     // Find shelf
     const { data: shelfData } = await supabase
       .from('shelves')
       .select('id')
-      .eq('barcode', shelfBarcode)
+      .eq('barcode', normalizedBarcode)
       .single();
 
     if (!shelfData) {

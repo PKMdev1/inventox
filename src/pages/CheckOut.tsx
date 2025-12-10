@@ -31,10 +31,13 @@ export const CheckOut = () => {
   }, [shelfBarcode]);
 
   const fetchShelf = async () => {
+    // Normalize barcode for consistent matching
+    const normalizedBarcode = shelfBarcode.trim().toUpperCase();
+    
     const { data, error } = await supabase
       .from('shelves')
       .select('*')
-      .eq('barcode', shelfBarcode)
+      .eq('barcode', normalizedBarcode)
       .single();
 
     if (error || !data) {
@@ -80,7 +83,7 @@ export const CheckOut = () => {
           payload: {
             serial_number: serialNumber.trim(),
             shelf_barcode: shelf.barcode,
-            destination_shelf_barcode: checkOutType === 'MOVE' ? destinationShelfBarcode.trim() : undefined,
+            destination_shelf_barcode: checkOutType === 'MOVE' ? destinationShelfBarcode.trim().toUpperCase() : undefined,
           },
         });
         toast.success('Action queued for sync');
@@ -107,10 +110,13 @@ export const CheckOut = () => {
       throw new Error('Item not found');
     }
 
+    // Normalize source shelf barcode
+    const normalizedFromBarcode = fromShelfBarcode.trim().toUpperCase();
+    
     const fromShelf = await supabase
       .from('shelves')
       .select('id')
-      .eq('barcode', fromShelfBarcode)
+      .eq('barcode', normalizedFromBarcode)
       .single();
 
     if (!fromShelf.data) {
@@ -119,16 +125,30 @@ export const CheckOut = () => {
 
     let toShelfId: string | null = null;
     if (toShelfBarcode) {
-      const { data: toShelf } = await supabase
+      // Trim and normalize barcode for comparison
+      const normalizedBarcode = toShelfBarcode.trim().toUpperCase();
+      
+      const { data: toShelf, error: toShelfError } = await supabase
         .from('shelves')
-        .select('id')
-        .eq('barcode', toShelfBarcode)
+        .select('id, barcode')
+        .eq('barcode', normalizedBarcode)
         .single();
 
-      if (!toShelf) {
-        throw new Error('Destination shelf not found');
+      if (toShelfError || !toShelf) {
+        // Try case-insensitive search as fallback
+        const { data: toShelfCaseInsensitive, error: caseError } = await supabase
+          .from('shelves')
+          .select('id, barcode')
+          .ilike('barcode', normalizedBarcode)
+          .single();
+        
+        if (caseError || !toShelfCaseInsensitive) {
+          throw new Error(`Destination shelf not found. Scanned: "${toShelfBarcode}". Please check the QR code.`);
+        }
+        toShelfId = toShelfCaseInsensitive.id;
+      } else {
+        toShelfId = toShelf.id;
       }
-      toShelfId = toShelf.id;
     }
 
     // Update item's current shelf
@@ -154,7 +174,8 @@ export const CheckOut = () => {
   };
 
   const handleShelfScan = (barcode: string) => {
-    setDestinationShelfBarcode(barcode);
+    // Normalize barcode (trim and uppercase) when scanned
+    setDestinationShelfBarcode(barcode.trim().toUpperCase());
     setShowShelfScanner(false);
   };
 
@@ -245,7 +266,7 @@ export const CheckOut = () => {
                     id="destination"
                     type="text"
                     value={destinationShelfBarcode}
-                    onChange={(e) => setDestinationShelfBarcode(e.target.value)}
+                    onChange={(e) => setDestinationShelfBarcode(e.target.value.toUpperCase())}
                     required
                     className="flex-1 px-4 py-3 text-base bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
                     placeholder="Scan destination shelf QR code"
