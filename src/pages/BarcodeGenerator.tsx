@@ -14,6 +14,7 @@ export const BarcodeGenerator = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedShelves, setSelectedShelves] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadShelves();
@@ -104,7 +105,31 @@ export const BarcodeGenerator = () => {
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedShelves.size === shelves.length) {
+      // Deselect all
+      setSelectedShelves(new Set());
+    } else {
+      // Select all
+      setSelectedShelves(new Set(shelves.map(s => s.id)));
+    }
+  };
+
+  const handleToggleShelf = (shelfId: string) => {
+    const newSelected = new Set(selectedShelves);
+    if (newSelected.has(shelfId)) {
+      newSelected.delete(shelfId);
+    } else {
+      newSelected.add(shelfId);
+    }
+    setSelectedShelves(newSelected);
+  };
+
   const handlePrint = () => {
+    if (selectedShelves.size === 0) {
+      toast.error('Please select at least one label to print');
+      return;
+    }
     window.print();
   };
 
@@ -240,15 +265,41 @@ export const BarcodeGenerator = () => {
           </form>
         </div>
 
-        {/* Print Button */}
+        {/* Print Controls */}
         {shelves.length > 0 && (
-          <div className="mb-4 sm:mb-6 flex justify-end">
-            <button
-              onClick={handlePrint}
-              className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 min-h-[48px] text-sm sm:text-base"
-            >
-              🖨️ <span className="hidden sm:inline">Print </span>Labels
-            </button>
+          <div className="mb-4 sm:mb-6 bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <label className="flex items-center cursor-pointer min-h-[44px]">
+                  <input
+                    type="checkbox"
+                    checked={selectedShelves.size === shelves.length && shelves.length > 0}
+                    onChange={handleSelectAll}
+                    className="w-5 h-5 text-blue-600 focus:ring-blue-500 rounded border-gray-300 cursor-pointer"
+                  />
+                  <span className="ml-2 sm:ml-3 text-sm sm:text-base font-semibold text-gray-900">
+                    Select All ({selectedShelves.size} of {shelves.length})
+                  </span>
+                </label>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                <button
+                  onClick={handlePrint}
+                  disabled={selectedShelves.size === 0}
+                  className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] text-sm sm:text-base flex items-center justify-center gap-2"
+                >
+                  🖨️ <span>Print Selected ({selectedShelves.size})</span>
+                </button>
+                {selectedShelves.size > 0 && (
+                  <button
+                    onClick={() => setSelectedShelves(new Set())}
+                    className="bg-gray-500 hover:bg-gray-600 active:bg-gray-700 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 min-h-[48px] text-sm sm:text-base"
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -262,11 +313,26 @@ export const BarcodeGenerator = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 print:grid-cols-3">
-              {shelves.map((shelf) => (
-                <div
-                  key={shelf.id}
-                  className="border-2 border-gray-300 rounded-xl p-4 sm:p-6 print:break-inside-avoid bg-white shadow-md hover:shadow-lg transition"
-                >
+              {shelves.map((shelf) => {
+                const isSelected = selectedShelves.has(shelf.id);
+                return (
+                  <div
+                    key={shelf.id}
+                    className={`border-2 rounded-xl p-4 sm:p-6 print:break-inside-avoid bg-white shadow-md hover:shadow-lg transition relative ${
+                      isSelected 
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' 
+                        : 'border-gray-300'
+                    } ${!isSelected ? 'print:hidden' : ''}`}
+                  >
+                    {/* Checkbox */}
+                    <div className="absolute top-2 sm:top-3 left-2 sm:left-3 print:hidden">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleShelf(shelf.id)}
+                        className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 focus:ring-blue-500 rounded border-gray-300 cursor-pointer bg-white shadow-md"
+                      />
+                    </div>
                   <div className="text-center mb-3 sm:mb-4">
                     <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{shelf.name}</h3>
                     <p className="text-xs sm:text-sm font-medium text-gray-600">{shelf.location}</p>
@@ -281,8 +347,9 @@ export const BarcodeGenerator = () => {
                     />
                   </div>
                   <p className="text-xs text-center text-gray-700 font-mono font-semibold bg-gray-100 py-2 px-2 sm:px-3 rounded break-all">{shelf.barcode}</p>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -302,14 +369,23 @@ export const BarcodeGenerator = () => {
           body * {
             visibility: hidden;
           }
-          .bg-white, .bg-white * {
+          .print\\:break-inside-avoid, .print\\:break-inside-avoid * {
             visibility: visible;
           }
-          .bg-white {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+          .print\\:grid-cols-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1.5rem;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          @page {
+            margin: 0.5in;
+          }
+          body {
+            margin: 0;
+            padding: 0;
           }
         }
       `}</style>
