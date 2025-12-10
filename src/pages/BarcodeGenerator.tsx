@@ -366,47 +366,53 @@ export const BarcodeGenerator = () => {
       {/* Print Styles */}
       <style>{`
         @media print {
-          /* Hide everything except labels container */
-          body > *:not(.labels-container) {
-            display: none !important;
+          /* Hide everything by default */
+          body * {
+            visibility: hidden;
           }
           
-          /* Show labels container */
+          /* Show only the labels container */
           .labels-container {
-            display: block !important;
+            visibility: visible !important;
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
-            padding: 0 !important;
-            margin: 0 !important;
-            background: white !important;
-            box-shadow: none !important;
-            border: none !important;
+            padding: 0.5in;
+            margin: 0;
+            background: white;
           }
           
-          /* Hide title and empty state */
-          .labels-container > h2,
-          .labels-container > div:has(> .text-center) {
+          /* Hide title in labels container */
+          .labels-container > h2 {
             display: none !important;
           }
           
-          /* Labels grid */
+          /* Hide empty state */
+          .labels-container > div.text-center {
+            display: none !important;
+          }
+          
+          /* Show labels grid */
           .labels-grid {
+            visibility: visible !important;
             display: grid !important;
             grid-template-columns: repeat(3, 1fr) !important;
             gap: 1rem;
-            padding: 0.5in;
+            padding: 0;
             margin: 0;
           }
           
-          /* Hide unselected labels */
+          /* Hide unselected labels (those with border-gray-300 and print:hidden) */
+          .label-item.border-gray-300,
           .label-item.print\\:hidden {
             display: none !important;
+            visibility: hidden !important;
           }
           
-          /* Show only selected labels */
-          .label-item:not(.print\\:hidden) {
+          /* Show selected labels (those with border-blue-500) */
+          .label-item.border-blue-500 {
+            visibility: visible !important;
             display: block !important;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -418,15 +424,29 @@ export const BarcodeGenerator = () => {
             border-radius: 0.5rem;
           }
           
-          /* Hide checkboxes */
-          .label-item input[type="checkbox"] {
-            display: none !important;
+          /* Make all content inside selected labels visible */
+          .label-item.border-blue-500 * {
+            visibility: visible !important;
           }
           
-          /* Ensure text is visible */
-          .label-item h3,
-          .label-item p {
+          /* Hide checkboxes */
+          .label-item input[type="checkbox"],
+          .label-item > div:has(input[type="checkbox"]) {
+            display: none !important;
+            visibility: hidden !important;
+          }
+          
+          /* Ensure QR codes are visible */
+          .label-item.border-blue-500 svg {
+            visibility: visible !important;
+            display: block !important;
+          }
+          
+          /* Ensure text is black and visible */
+          .label-item.border-blue-500 h3,
+          .label-item.border-blue-500 p {
             color: #000 !important;
+            visibility: visible !important;
           }
           
           /* Page settings */
