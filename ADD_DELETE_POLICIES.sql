@@ -16,6 +16,10 @@ CREATE POLICY "Users can delete shelves" ON shelves
 CREATE POLICY "Users can delete items" ON items
   FOR DELETE USING (auth.role() = 'authenticated');
 
+-- Add DELETE policy for movements
+CREATE POLICY "Users can delete movements" ON movements
+  FOR DELETE USING (auth.role() = 'authenticated');
+
 -- ============================================
 -- VERIFICATION
 -- ============================================
@@ -25,5 +29,7 @@ CREATE POLICY "Users can delete items" ON items
 -- 3. You should see a DELETE policy listed
 -- 4. Select the 'items' table  
 -- 5. You should see a DELETE policy listed
+-- 6. Select the 'movements' table
+-- 7. You should see a DELETE policy listed
 -- ============================================
 

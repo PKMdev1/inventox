@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Shelf } from '../types';
 import { Link } from 'react-router-dom';
 import { BarcodeScanner } from '../components/BarcodeScanner';
+import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
-import JsBarcode from 'jsbarcode';
 
 export const BarcodeGenerator = () => {
   const [shelfName, setShelfName] = useState('');
@@ -14,26 +14,10 @@ export const BarcodeGenerator = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [loading, setLoading] = useState(false);
-  const barcodeRefs = useRef<{ [key: string]: HTMLCanvasElement | null }>({});
 
   useEffect(() => {
     loadShelves();
   }, []);
-
-  useEffect(() => {
-    // Render barcodes when shelves change
-    shelves.forEach((shelf) => {
-      const canvas = barcodeRefs.current[shelf.id];
-      if (canvas) {
-        JsBarcode(canvas, shelf.barcode, {
-          format: 'CODE128',
-          width: 2,
-          height: 80,
-          displayValue: true,
-        });
-      }
-    });
-  }, [shelves]);
 
   const loadShelves = async () => {
     try {
@@ -50,7 +34,7 @@ export const BarcodeGenerator = () => {
   };
 
   const generateBarcode = (): string => {
-    // Generate a unique barcode (UUID-based, simplified)
+    // Generate a unique QR code value (UUID-based, simplified)
     const prefix = 'SHELF-';
     const random = Math.random().toString(36).substring(2, 10).toUpperCase();
     return `${prefix}${random}`;
@@ -75,7 +59,7 @@ export const BarcodeGenerator = () => {
       finalBarcode = generateBarcode();
     } else {
       if (!barcode.trim()) {
-        toast.error('Please enter or scan a barcode');
+        toast.error('Please enter or scan a QR code');
         return;
       }
       finalBarcode = barcode.trim().toUpperCase();
@@ -88,7 +72,7 @@ export const BarcodeGenerator = () => {
         .single();
 
       if (existingShelf) {
-        toast.error(`Barcode "${finalBarcode}" is already used by shelf "${existingShelf.name}"`);
+        toast.error(`QR Code "${finalBarcode}" is already used by shelf "${existingShelf.name}"`);
         return;
       }
     }
@@ -132,7 +116,7 @@ export const BarcodeGenerator = () => {
             <Link to="/dashboard" className="text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 sm:gap-2 min-h-[44px] flex items-center">
               <span className="text-lg sm:text-xl">←</span> <span className="text-sm sm:text-base">Back</span>
             </Link>
-            <h1 className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">Barcode Generator</h1>
+            <h1 className="text-base sm:text-lg lg:text-2xl font-bold text-gray-900">QR Code Generator</h1>
             <div className="w-16 sm:w-20"></div>
           </div>
         </div>
@@ -174,10 +158,10 @@ export const BarcodeGenerator = () => {
               </div>
             </div>
 
-            {/* Barcode Options */}
+            {/* QR Code Options */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Barcode Option
+                QR Code Option
               </label>
               <div className="space-y-3 bg-gray-50 p-3 sm:p-4 rounded-lg border-2 border-gray-200">
                 <label className="flex items-center cursor-pointer min-h-[44px]">
@@ -193,8 +177,8 @@ export const BarcodeGenerator = () => {
                     className="mr-3 w-5 h-5 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                   />
                   <div className="flex-1">
-                    <span className="font-medium text-gray-900 text-sm sm:text-base block">Auto-generate barcode</span>
-                    <span className="text-xs text-gray-600">System will create a unique barcode automatically</span>
+                    <span className="font-medium text-gray-900 text-sm sm:text-base block">Auto-generate QR Code</span>
+                    <span className="text-xs text-gray-600">System will create a unique QR code automatically</span>
                   </div>
                 </label>
                 <label className="flex items-center cursor-pointer min-h-[44px]">
@@ -207,18 +191,18 @@ export const BarcodeGenerator = () => {
                     className="mr-3 w-5 h-5 text-blue-600 focus:ring-blue-500 flex-shrink-0"
                   />
                   <div className="flex-1">
-                    <span className="font-medium text-gray-900 text-sm sm:text-base block">Use existing barcode</span>
-                    <span className="text-xs text-gray-600">Scan or enter an existing shelf barcode</span>
+                    <span className="font-medium text-gray-900 text-sm sm:text-base block">Use existing QR Code</span>
+                    <span className="text-xs text-gray-600">Scan or enter an existing shelf QR code</span>
                   </div>
                 </label>
               </div>
             </div>
 
-            {/* Barcode Input (only show when manual mode) */}
+            {/* QR Code Input (only show when manual mode) */}
             {barcodeMode === 'manual' && (
               <div>
                 <label htmlFor="barcode" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Shelf Barcode
+                  Shelf QR Code
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <input
@@ -228,7 +212,7 @@ export const BarcodeGenerator = () => {
                     onChange={(e) => setBarcode(e.target.value.toUpperCase())}
                     required={barcodeMode === 'manual'}
                     className="flex-1 px-4 py-3 text-base bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-900 placeholder-gray-500 font-mono"
-                    placeholder="Scan or enter barcode"
+                    placeholder="Scan or enter QR code"
                   />
                   <button
                     type="button"
@@ -239,7 +223,7 @@ export const BarcodeGenerator = () => {
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-gray-600">
-                  Enter the barcode from an existing shelf label, or scan it using the camera
+                  Enter the QR code from an existing shelf label, or scan it using the camera
                 </p>
               </div>
             )}
@@ -250,7 +234,7 @@ export const BarcodeGenerator = () => {
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold py-3.5 sm:py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[56px] text-sm sm:text-base"
               >
-                {loading ? 'Creating...' : barcodeMode === 'auto' ? 'Create Shelf & Generate Barcode' : 'Create Shelf with Existing Barcode'}
+                {loading ? 'Creating...' : barcodeMode === 'auto' ? 'Create Shelf & Generate QR Code' : 'Create Shelf with Existing QR Code'}
               </button>
             </div>
           </form>
@@ -288,10 +272,12 @@ export const BarcodeGenerator = () => {
                     <p className="text-xs sm:text-sm font-medium text-gray-600">{shelf.location}</p>
                   </div>
                   <div className="flex justify-center mb-2 sm:mb-3 bg-gray-50 p-2 sm:p-3 rounded-lg">
-                    <canvas
-                      ref={(el) => {
-                        barcodeRefs.current[shelf.id] = el;
-                      }}
+                    <QRCodeSVG
+                      value={shelf.barcode}
+                      size={200}
+                      level="H"
+                      includeMargin={true}
+                      className="w-full max-w-[200px] h-auto"
                     />
                   </div>
                   <p className="text-xs text-center text-gray-700 font-mono font-semibold bg-gray-100 py-2 px-2 sm:px-3 rounded break-all">{shelf.barcode}</p>
@@ -306,7 +292,7 @@ export const BarcodeGenerator = () => {
         <BarcodeScanner
           onScan={handleScanBarcode}
           onClose={() => setShowScanner(false)}
-          title="Scan Existing Shelf Barcode"
+          title="Scan Existing Shelf QR Code"
         />
       )}
 

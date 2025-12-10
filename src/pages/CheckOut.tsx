@@ -248,7 +248,7 @@ export const CheckOut = () => {
                     onChange={(e) => setDestinationShelfBarcode(e.target.value)}
                     required
                     className="flex-1 px-4 py-3 text-base bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-900 placeholder-gray-500"
-                    placeholder="Scan destination shelf barcode"
+                    placeholder="Scan destination shelf QR code"
                   />
                   <button
                     type="button"

@@ -218,7 +218,7 @@ export const ScanShelf = () => {
             <div className="mb-6">
               <div className="text-5xl sm:text-6xl mb-4">📷</div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Ready to Scan</h2>
-              <p className="text-sm sm:text-base text-gray-600">Scan a shelf barcode to view its contents</p>
+              <p className="text-sm sm:text-base text-gray-600">Scan a shelf QR code to view its contents</p>
             </div>
             <button
               onClick={() => setShowScanner(true)}
@@ -353,7 +353,7 @@ export const ScanShelf = () => {
           <BarcodeScanner
             onScan={handleScan}
             onClose={() => setShowScanner(false)}
-            title="Scan Shelf Barcode"
+            title="Scan Shelf QR Code"
           />
         )}
 

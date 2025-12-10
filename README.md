@@ -120,6 +120,9 @@ CREATE POLICY "Users can delete shelves" ON shelves
 CREATE POLICY "Users can delete items" ON items
   FOR DELETE USING (auth.role() = 'authenticated');
 
+CREATE POLICY "Users can delete movements" ON movements
+  FOR DELETE USING (auth.role() = 'authenticated');
+
 CREATE POLICY "Users can insert movements" ON movements
   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 ```

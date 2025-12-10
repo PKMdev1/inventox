@@ -99,7 +99,14 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <AppRoutes />
-        <Toaster position="top-right" />
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            duration: 4000,
+            // Prevent duplicate toasts
+            id: undefined,
+          }}
+        />
       </BrowserRouter>
     </AuthProvider>
   );

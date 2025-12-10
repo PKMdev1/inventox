@@ -98,7 +98,7 @@ export const Dashboard = () => {
             to="/barcode-generator"
             className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300 font-semibold py-4 sm:py-5 px-4 sm:px-6 rounded-xl text-center shadow-sm hover:shadow-md transition-all duration-200 text-gray-900 min-h-[60px] flex items-center justify-center text-sm sm:text-base sm:col-span-2 lg:col-span-1"
           >
-            Barcode Generator
+            QR Code Generator
           </Link>
         </div>
       </div>
