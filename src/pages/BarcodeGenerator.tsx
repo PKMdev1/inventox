@@ -304,7 +304,7 @@ export const BarcodeGenerator = () => {
         )}
 
         {/* Shelf Labels Grid */}
-        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 labels-container">
           <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">Shelf Labels</h2>
           {shelves.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
@@ -312,17 +312,17 @@ export const BarcodeGenerator = () => {
               <p className="text-gray-600 font-medium text-base sm:text-lg">No shelves created yet</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 print:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 labels-grid">
               {shelves.map((shelf) => {
                 const isSelected = selectedShelves.has(shelf.id);
                 return (
                   <div
                     key={shelf.id}
-                    className={`border-2 rounded-xl p-4 sm:p-6 print:break-inside-avoid bg-white shadow-md hover:shadow-lg transition relative ${
+                    className={`label-item border-2 rounded-xl p-4 sm:p-6 bg-white shadow-md hover:shadow-lg transition relative ${
                       isSelected 
                         ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300' 
-                        : 'border-gray-300'
-                    } ${!isSelected ? 'print:hidden' : ''}`}
+                        : 'border-gray-300 print:hidden'
+                    }`}
                   >
                     {/* Checkbox */}
                     <div className="absolute top-2 sm:top-3 left-2 sm:left-3 print:hidden">
@@ -366,26 +366,79 @@ export const BarcodeGenerator = () => {
       {/* Print Styles */}
       <style>{`
         @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print\\:break-inside-avoid, .print\\:break-inside-avoid * {
-            visibility: visible;
-          }
-          .print\\:grid-cols-3 {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 1.5rem;
-          }
-          .print\\:hidden {
+          /* Hide everything except labels container */
+          body > *:not(.labels-container) {
             display: none !important;
           }
+          
+          /* Show labels container */
+          .labels-container {
+            display: block !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: white !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          
+          /* Hide title and empty state */
+          .labels-container > h2,
+          .labels-container > div:has(> .text-center) {
+            display: none !important;
+          }
+          
+          /* Labels grid */
+          .labels-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 1rem;
+            padding: 0.5in;
+            margin: 0;
+          }
+          
+          /* Hide unselected labels */
+          .label-item.print\\:hidden {
+            display: none !important;
+          }
+          
+          /* Show only selected labels */
+          .label-item:not(.print\\:hidden) {
+            display: block !important;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            margin: 0;
+            padding: 1rem;
+            border: 2px solid #000 !important;
+            background: white !important;
+            box-shadow: none !important;
+            border-radius: 0.5rem;
+          }
+          
+          /* Hide checkboxes */
+          .label-item input[type="checkbox"] {
+            display: none !important;
+          }
+          
+          /* Ensure text is visible */
+          .label-item h3,
+          .label-item p {
+            color: #000 !important;
+          }
+          
+          /* Page settings */
           @page {
+            size: letter;
             margin: 0.5in;
           }
+          
           body {
             margin: 0;
             padding: 0;
+            background: white;
           }
         }
       `}</style>
