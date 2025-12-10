@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #111827; /* Darker gray for better contrast */
+  background-color: #f9fafb; /* Light gray background */
+  line-height: 1.6;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Improved focus states for accessibility */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Better button contrast */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Improved table readability */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th {
+  font-weight: 700;
+  color: #111827; /* Darker for better contrast */
+}
+
+td {
+  color: #111827; /* Dark text for readability */
+  font-weight: 500;
+}
+
+/* Ensure all input fields have proper contrast */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  background-color: #ffffff;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+input[type="password"]:disabled,
+input[type="number"]:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Better placeholder contrast */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* Gray-500 for better visibility */
+  opacity: 1;
+}
+
+/* Ensure labels have good contrast */
+label {
+  color: #374151; /* Gray-700 for labels */
+  font-weight: 600;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Ensure buttons are touch-friendly (minimum 44x44px) */
+  button, a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better text sizing on mobile */
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  /* Prevent text from being too small */
+  body {
+    font-size: 16px; /* Prevents iOS zoom on input focus */
+  }
+  
+  /* Better table scrolling on mobile */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (hover: none) and (pointer: coarse) {
+  button, a, input[type="button"], input[type="submit"] {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
+  }
+}
+
