@@ -560,6 +560,180 @@ export const Reports = () => {
                   </table>
                 )}
 
+                {activeTab === 'movements' && (
+                  <>
+                    {/* Mobile Card View */}
+                    <div className="sm:hidden space-y-3">
+                      {movements.length === 0 ? (
+                        <div className="text-center py-8 sm:py-12">
+                          <div className="text-4xl mb-4">📋</div>
+                          <p className="text-gray-600 font-medium text-sm sm:text-base">No movements found for this filter.</p>
+                        </div>
+                      ) : (
+                        movements.map((movement) => (
+                          <div key={movement.id} className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="text-xs text-gray-500 mb-1">Timestamp</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {new Date(movement.timestamp).toLocaleString()}
+                                </div>
+                              </div>
+                              <span
+                                className={`px-2.5 py-1 rounded-md text-xs font-bold flex-shrink-0 ${
+                                  movement.movement_type === 'IN'
+                                    ? 'bg-green-100 text-green-800 border border-green-300'
+                                    : movement.movement_type === 'OUT'
+                                    ? 'bg-red-100 text-red-800 border border-red-300'
+                                    : 'bg-blue-100 text-blue-800 border border-blue-300'
+                                }`}
+                              >
+                                {movement.movement_type}
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-2 border-t border-gray-300 pt-3">
+                              <div>
+                                <div className="text-xs text-gray-500 mb-0.5">Item Serial</div>
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {movement.item?.serial_number || movement.item_id}
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <div className="text-xs text-gray-500 mb-0.5">From Shelf</div>
+                                  <div className="text-xs font-medium text-gray-700">
+                                    {movement.from_shelf ? (
+                                      <span>
+                                        {movement.from_shelf.name}
+                                        {movement.from_shelf.location && (
+                                          <span className="text-gray-500"> ({movement.from_shelf.location})</span>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      '—'
+                                    )}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-500 mb-0.5">To Shelf</div>
+                                  <div className="text-xs font-medium text-gray-700">
+                                    {movement.to_shelf ? (
+                                      <span>
+                                        {movement.to_shelf.name}
+                                        {movement.to_shelf.location && (
+                                          <span className="text-gray-500"> ({movement.to_shelf.location})</span>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      '—'
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <div className="text-xs text-gray-500 mb-0.5">User</div>
+                                <div className="text-xs font-medium text-gray-600">
+                                  {movement.user_email || 'Unknown'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <table className="min-w-full divide-y divide-gray-200 hidden sm:table">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Timestamp
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Type
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Item Serial
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                            From Shelf
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                            To Shelf
+                          </th>
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                            User
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {movements.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="px-6 py-12 text-center">
+                              <div className="text-4xl mb-4">📋</div>
+                              <p className="text-gray-600 font-medium text-sm sm:text-base">No movements found for this filter.</p>
+                            </td>
+                          </tr>
+                        ) : (
+                          movements.map((movement) => (
+                            <tr key={movement.id} className="hover:bg-gray-50 transition">
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                                {new Date(movement.timestamp).toLocaleString()}
+                              </td>
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm">
+                                <span
+                                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-bold ${
+                                    movement.movement_type === 'IN'
+                                      ? 'bg-green-100 text-green-800 border border-green-300'
+                                      : movement.movement_type === 'OUT'
+                                      ? 'bg-red-100 text-red-800 border border-red-300'
+                                      : 'bg-blue-100 text-blue-800 border border-blue-300'
+                                  }`}
+                                >
+                                  {movement.movement_type}
+                                </span>
+                              </td>
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-900">
+                                {movement.item?.serial_number || movement.item_id}
+                              </td>
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-700 hidden md:table-cell">
+                                {movement.from_shelf ? (
+                                  <span>
+                                    {movement.from_shelf.name}
+                                    {movement.from_shelf.location && (
+                                      <span className="text-gray-500 text-xs"> ({movement.from_shelf.location})</span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-700 hidden md:table-cell">
+                                {movement.to_shelf ? (
+                                  <span>
+                                    {movement.to_shelf.name}
+                                    {movement.to_shelf.location && (
+                                      <span className="text-gray-500 text-xs"> ({movement.to_shelf.location})</span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-600 hidden lg:table-cell">
+                                {movement.user_email || 'Unknown'}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </>
+                )}
+
                 {activeTab === 'shelves' && (
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
