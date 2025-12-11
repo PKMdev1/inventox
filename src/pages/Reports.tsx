@@ -85,13 +85,69 @@ export const Reports = () => {
 
         if (error) throw error;
         
+        // Get unique user IDs from movements
+        const uniqueUserIds = [...new Set((data || []).map((m: any) => m.user_id).filter(Boolean))];
+        
+        // Fetch user emails and names using database function
+        const userEmailMap: Record<string, string> = {};
+        const userNameMap: Record<string, string> = {};
+        
+        // Add current user's email and name to map
+        if (user) {
+          userEmailMap[user.id] = user.email || 'Unknown';
+          userNameMap[user.id] = user.user_metadata?.full_name || user.user_metadata?.name || '';
+        }
+        
+        // Try to fetch other user emails and names using the database function
+        if (uniqueUserIds.length > 0) {
+          try {
+            const { data: userInfo, error: userError } = await supabase.rpc('get_user_emails', {
+              user_ids: uniqueUserIds
+            });
+            
+            if (!userError && userInfo) {
+              // Map user emails and names
+              userInfo.forEach((u: { user_id: string; email: string; name: string | null }) => {
+                if (u.email) {
+                  userEmailMap[u.user_id] = u.email;
+                }
+                if (u.name) {
+                  userNameMap[u.user_id] = u.name;
+                }
+              });
+            }
+          } catch (err) {
+            // Function might not exist yet - that's okay, we'll use fallback
+            console.warn('Could not fetch user info (function may not be created yet):', err);
+          }
+        }
+        
         // Transform movements with details
         const movementsWithDetails = (data || []).map((movement: any) => {
-          // Show current user's email if it matches, otherwise show truncated ID
-          const isCurrentUser = user && movement.user_id === user.id;
-          const userDisplay = isCurrentUser 
-            ? (user.email || 'You') 
-            : (movement.user_id ? movement.user_id.substring(0, 8) + '...' : 'Unknown');
+          // Get user email and name, create display string
+          let userDisplay = 'Unknown';
+          let userName = '';
+          
+          if (movement.user_id) {
+            if (user && movement.user_id === user.id) {
+              const currentUserName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+              userName = currentUserName;
+              userDisplay = currentUserName ? `${currentUserName} (${user.email})` : (user.email || 'You');
+            } else {
+              const email = userEmailMap[movement.user_id];
+              const name = userNameMap[movement.user_id];
+              
+              if (name && email) {
+                userDisplay = `${name} (${email})`;
+                userName = name;
+              } else if (email) {
+                userDisplay = email;
+              } else {
+                // Format: Show first 8 chars of UUID as fallback
+                userDisplay = `User ${movement.user_id.substring(0, 8)}...`;
+              }
+            }
+          }
           
           return {
             ...movement,
@@ -99,6 +155,7 @@ export const Reports = () => {
             from_shelf: movement.from_shelf || null,
             to_shelf: movement.to_shelf || null,
             user_email: userDisplay,
+            user_name: userName,
           };
         });
         
@@ -130,7 +187,7 @@ export const Reports = () => {
         'Item Serial': movement.item?.serial_number || movement.item_id,
         'From Shelf': movement.from_shelf ? `${movement.from_shelf.name}${movement.from_shelf.location ? ` (${movement.from_shelf.location})` : ''}` : '—',
         'To Shelf': movement.to_shelf ? `${movement.to_shelf.name}${movement.to_shelf.location ? ` (${movement.to_shelf.location})` : ''}` : '—',
-        'User': movement.user_email || movement.user_id?.substring(0, 8) + '...' || 'Unknown',
+        'Moved By': movement.user_email || movement.user_id?.substring(0, 8) + '...' || 'Unknown',
       }));
     } else if (activeTab === 'items') {
       return items.map((item: any) => ({
@@ -633,9 +690,9 @@ export const Reports = () => {
                                 </div>
                               </div>
                               
-                              <div>
-                                <div className="text-xs text-gray-500 mb-0.5">User</div>
-                                <div className="text-xs font-medium text-gray-600">
+                              <div className="border-t border-gray-300 pt-2 mt-2">
+                                <div className="text-xs text-gray-500 mb-0.5 font-semibold">Moved By</div>
+                                <div className="text-sm font-semibold text-gray-900">
                                   {movement.user_email || 'Unknown'}
                                 </div>
                               </div>
@@ -664,8 +721,8 @@ export const Reports = () => {
                           <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
                             To Shelf
                           </th>
-                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
-                            User
+                          <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                            Moved By
                           </th>
                         </tr>
                       </thead>
@@ -723,7 +780,7 @@ export const Reports = () => {
                                   '—'
                                 )}
                               </td>
-                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-600 hidden lg:table-cell">
+                              <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-900 hidden md:table-cell">
                                 {movement.user_email || 'Unknown'}
                               </td>
                             </tr>

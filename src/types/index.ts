@@ -36,6 +36,7 @@ export interface MovementWithDetails extends Movement {
   from_shelf?: Shelf | null;
   to_shelf?: Shelf | null;
   user_email?: string;
+  user_name?: string;
 }
 
 export interface ItemWithShelf extends Item {

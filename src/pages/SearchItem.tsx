@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Item, MovementWithDetails, Shelf } from '../types';
+import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const SearchItem = () => {
+  const { user } = useAuth();
   const [serialNumber, setSerialNumber] = useState('');
   const [item, setItem] = useState<Item | null>(null);
   const [shelf, setShelf] = useState<Shelf | null>(null);
@@ -64,7 +66,77 @@ export const SearchItem = () => {
         console.error('Error fetching movements:', movementsError);
         setMovements([]);
       } else {
-        setMovements(movementsData || []);
+        // Get unique user IDs from movements
+        const uniqueUserIds = [...new Set((movementsData || []).map((m: any) => m.user_id).filter(Boolean))];
+        
+        // Fetch user emails and names using database function
+        const userEmailMap: Record<string, string> = {};
+        const userNameMap: Record<string, string> = {};
+        
+        // Add current user's email and name to map
+        if (user) {
+          userEmailMap[user.id] = user.email || 'Unknown';
+          userNameMap[user.id] = user.user_metadata?.full_name || user.user_metadata?.name || '';
+        }
+        
+        // Try to fetch other user emails and names using the database function
+        if (uniqueUserIds.length > 0) {
+          try {
+            const { data: userInfo, error: userError } = await supabase.rpc('get_user_emails', {
+              user_ids: uniqueUserIds
+            });
+            
+            if (!userError && userInfo) {
+              // Map user emails and names
+              userInfo.forEach((u: { user_id: string; email: string; name: string | null }) => {
+                if (u.email) {
+                  userEmailMap[u.user_id] = u.email;
+                }
+                if (u.name) {
+                  userNameMap[u.user_id] = u.name;
+                }
+              });
+            }
+          } catch (err) {
+            // Function might not exist yet - that's okay, we'll use fallback
+            console.warn('Could not fetch user info (function may not be created yet):', err);
+          }
+        }
+        
+        // Transform movements with user emails and names
+        const movementsWithDetails = (movementsData || []).map((movement: any) => {
+          // Get user email and name, create display string
+          let userDisplay = 'Unknown';
+          let userName = '';
+          
+          if (movement.user_id) {
+            if (user && movement.user_id === user.id) {
+              const currentUserName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+              userName = currentUserName;
+              userDisplay = currentUserName ? `${currentUserName} (${user.email})` : (user.email || 'You');
+            } else {
+              const email = userEmailMap[movement.user_id];
+              const name = userNameMap[movement.user_id];
+              
+              if (name && email) {
+                userDisplay = `${name} (${email})`;
+                userName = name;
+              } else if (email) {
+                userDisplay = email;
+              } else {
+                userDisplay = `User ${movement.user_id.substring(0, 8)}...`;
+              }
+            }
+          }
+          
+          return {
+            ...movement,
+            user_email: userDisplay,
+            user_name: userName,
+          };
+        });
+        
+        setMovements(movementsWithDetails);
       }
     } catch (error: any) {
       toast.error(error.message || 'Error searching item');
@@ -160,6 +232,9 @@ export const SearchItem = () => {
                       <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
                         To Shelf
                       </th>
+                      <th className="px-3 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                        Moved By
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -187,6 +262,9 @@ export const SearchItem = () => {
                         </td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-700 hidden sm:table-cell">
                           {movement.to_shelf ? `${movement.to_shelf.name} (${movement.to_shelf.location})` : '—'}
+                        </td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-semibold text-gray-900 hidden md:table-cell">
+                          {movement.user_email || 'Unknown'}
                         </td>
                       </tr>
                     ))}
