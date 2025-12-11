@@ -41,7 +41,7 @@ export const CheckOut = () => {
       .single();
 
     if (error || !data) {
-      toast.error('Shelf not found');
+      toast.error('Shelf not found', { id: `checkout-shelf-not-found-${shelfBarcode}` });
       navigate('/scan-shelf');
       return;
     }
@@ -57,7 +57,7 @@ export const CheckOut = () => {
     }
 
     if (!shelf) {
-      toast.error('Shelf not found');
+      toast.error('Shelf not found', { id: 'checkout-no-shelf-state' });
       return;
     }
 

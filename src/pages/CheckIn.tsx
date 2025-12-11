@@ -36,7 +36,7 @@ export const CheckIn = () => {
       .single();
 
     if (error || !data) {
-      toast.error('Shelf not found');
+      toast.error('Shelf not found', { id: `checkin-shelf-not-found-${shelfBarcode}` });
       navigate('/scan-shelf');
       return;
     }
@@ -52,7 +52,7 @@ export const CheckIn = () => {
     }
 
     if (!shelf) {
-      toast.error('Shelf not found');
+      toast.error('Shelf not found', { id: 'checkin-no-shelf-state' });
       return;
     }
 

@@ -17,8 +17,13 @@ export const ScanShelf = () => {
   const [showDeleteShelfDialog, setShowDeleteShelfDialog] = useState(false);
   const [showDeleteItemDialog, setShowDeleteItemDialog] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchShelfData = async (barcode: string) => {
+    // Prevent concurrent fetches
+    if (loading) return;
+    
+    setLoading(true);
     try {
       // Normalize barcode for consistent matching
       const normalizedBarcode = barcode.trim().toUpperCase();
@@ -31,7 +36,9 @@ export const ScanShelf = () => {
         .single();
 
       if (shelfError || !shelfData) {
-        toast.error('Shelf not found');
+        toast.error('Shelf not found', { id: `shelf-not-found-${normalizedBarcode}` });
+        setShelf(null);
+        setItems([]);
         return;
       }
 
@@ -51,7 +58,11 @@ export const ScanShelf = () => {
         setItems(itemsData || []);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error loading shelf data');
+      toast.error(error.message || 'Error loading shelf data', { id: `shelf-error-${barcode}` });
+      setShelf(null);
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +73,8 @@ export const ScanShelf = () => {
 
   useEffect(() => {
     const barcode = searchParams.get('barcode');
-    if (barcode && !shelf) {
+    // Only fetch if we have a barcode and don't already have shelf data for it
+    if (barcode && (!shelf || shelf.barcode !== barcode.trim().toUpperCase())) {
       fetchShelfData(barcode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
