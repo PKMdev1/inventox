@@ -14,7 +14,8 @@ export const Dashboard = () => {
       setPendingCount(getPendingActionCount());
     };
     updatePendingCount();
-    const interval = setInterval(updatePendingCount, 2000);
+    // Reduce polling frequency from 2s to 5s for better performance
+    const interval = setInterval(updatePendingCount, 5000);
     return () => clearInterval(interval);
   }, []);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Item, Shelf, MovementWithDetails } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -58,7 +58,7 @@ export const Reports = () => {
             shelf:shelves!items_current_shelf_id_fkey(name, location)
           `)
           .order('created_at', { ascending: false })
-          .limit(1000);
+          .limit(500);
 
         if (error) throw error;
         
@@ -81,7 +81,7 @@ export const Reports = () => {
             to_shelf:shelves!movements_to_shelf_id_fkey(name, location)
           `)
           .order('timestamp', { ascending: false })
-          .limit(1000);
+          .limit(500);
 
         if (error) throw error;
         
@@ -122,7 +122,7 @@ export const Reports = () => {
     }
   };
 
-  const transformDataForExport = (): Record<string, string>[] => {
+  const transformDataForExport = useCallback((): Record<string, string>[] => {
     if (activeTab === 'movements') {
       return movements.map((movement: any) => ({
         'Timestamp': new Date(movement.timestamp).toLocaleString(),
@@ -147,9 +147,9 @@ export const Reports = () => {
         'Created At': new Date(shelf.created_at).toLocaleString(),
       }));
     }
-  };
+  }, [activeTab, movements, items, shelves]);
 
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     const dataToExport = transformDataForExport();
     
     if (dataToExport.length === 0) {
@@ -189,9 +189,9 @@ export const Reports = () => {
     link.click();
     document.body.removeChild(link);
     toast.success('CSV exported successfully');
-  };
+  }, [transformDataForExport, activeTab, filterType]);
 
-  const exportToExcel = () => {
+  const exportToExcel = useCallback(() => {
     const dataToExport = transformDataForExport();
     
     if (dataToExport.length === 0) {
@@ -227,7 +227,7 @@ export const Reports = () => {
       console.error('Error exporting to Excel:', error);
       toast.error('Failed to export Excel file', { id: 'excel-export-error' });
     }
-  };
+  }, [transformDataForExport, activeTab, filterType]);
 
   const applyDateFilter = () => {
     // Prevent filtering if no movements loaded yet
